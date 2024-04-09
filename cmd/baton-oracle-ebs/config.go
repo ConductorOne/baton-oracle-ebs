@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 
+	"github.com/conductorone/baton-oracle-ebs/pkg/ebs"
 	"github.com/conductorone/baton-sdk/pkg/cli"
 	"github.com/spf13/cobra"
 	"google.golang.org/grpc/codes"
@@ -13,8 +14,7 @@ import (
 type config struct {
 	cli.BaseConfig `mapstructure:",squash"` // Puts the base config options in the same place as the connector options
 
-	Username string `mapstructure:"username"`
-	Password string `mapstructure:"password"`
+	Config ebs.Config `mapstructure:",squash"`
 
 	// TODO: later add more configuration options here
 	// PublicKeyPath string `mapstructure:"public-key-path"`
@@ -22,20 +22,17 @@ type config struct {
 
 // validateConfig is run after the configuration is loaded, and should return an error if it isn't valid.
 func validateConfig(ctx context.Context, cfg *config) error {
-	if cfg.Username == "" || cfg.Password == "" {
+	if cfg.Config.Username == "" || cfg.Config.Password == "" {
 		return status.Error(codes.InvalidArgument, "username and password are required")
 	}
-
-	// TODO later
-	// if cfg.PublicKeyPath == "" {
-	// 	return status.Error(codes.InvalidArgument, "public-key-path is required")
-	// }
 
 	return nil
 }
 
 func cmdFlags(cmd *cobra.Command) {
-	cmd.PersistentFlags().String("username", "", "Username for the Oracle EBS connection. ($BATON_USERNAME)")
-	cmd.PersistentFlags().String("password", "", "Password for the Oracle EBS connection. ($BATON_PASSWORD)")
-	// cmd.PersistentFlags().String("public-key-path", "", "Path to the public key file")
+	cmd.PersistentFlags().String("username", "", "Username for the Oracle EBS Database connection. ($BATON_USERNAME)")
+	cmd.PersistentFlags().String("password", "", "Password for the Oracle EBS Database connection. ($BATON_PASSWORD)")
+	cmd.PersistentFlags().String("server", "", "Server for the Oracle EBS connection. ($BATON_SERVER)")
+	cmd.PersistentFlags().String("service", "", "Service for the Oracle EBS connection. ($BATON_SERVICE)")
+	cmd.PersistentFlags().Int("port", 0, "Port for the Oracle EBS connection. ($BATON_PORT)")
 }

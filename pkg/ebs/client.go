@@ -2,11 +2,12 @@ package ebs
 
 import (
 	"context"
-	"database/sql"
+
+	ora "github.com/sijms/go-ora/v2"
 )
 
 const (
-	UsersTable = "FND_USER"
+	UsersTable = "APPS.FND_USER"
 
 	LimitToOneRecord = "ROWNUM = 1"
 )
@@ -18,7 +19,11 @@ var (
 )
 
 type Client struct {
-	db *sql.DB
+	Conn *ora.Connection
+}
+
+func NewEBSClient(c *ora.Connection) *Client {
+	return &Client{Conn: c}
 }
 
 func ComposeSQLQuery(attributes []string, table string, filter string) string {
@@ -46,19 +51,22 @@ func ComposeSQLQuery(attributes []string, table string, filter string) string {
 	return query
 }
 
-func NewEBSClient(db *sql.DB) *Client {
-	return &Client{db: db}
-}
-
 func (c *Client) ListUsers(ctx context.Context) ([]User, error) {
-	rows, err := c.db.QueryContext(ctx, ComposeSQLQuery(UsersAttributes, UsersTable, ""))
+	// prepare the SQL statement
+	query := ComposeSQLQuery(UsersAttributes, UsersTable, "")
+	stmt := ora.NewStmt(query, c.Conn)
+	defer stmt.Close()
+
+	// execute the SQL statement
+	rows, err := stmt.Query_(nil)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
 
+	// iterate over the rows and parse the data
 	var users []User
-	for rows.Next() {
+	for rows.Next_() {
 		var user User
 
 		err := rows.Scan(&user.ID, &user.UserName, &user.EmailAddress, &user.Description, &user.EmployeeID, &user.LastLogonDate, &user.CreatedAt, &user.StartDate, &user.EndDate)
