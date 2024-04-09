@@ -21,6 +21,7 @@ type OracleEBS struct {
 func (o *OracleEBS) ResourceSyncers(ctx context.Context) []connectorbuilder.ResourceSyncer {
 	return []connectorbuilder.ResourceSyncer{
 		newUserBuilder(o.client),
+		newRoleBuilder(o.client),
 	}
 }
 
