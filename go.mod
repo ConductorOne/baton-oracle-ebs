@@ -4,8 +4,8 @@ go 1.22.1
 
 require (
 	github.com/conductorone/baton-sdk v0.1.31
-	github.com/godror/godror v0.42.1
 	github.com/grpc-ecosystem/go-grpc-middleware v1.4.0
+	github.com/sijms/go-ora/v2 v2.8.11
 	github.com/spf13/cobra v1.8.0
 	go.uber.org/zap v1.27.0
 	google.golang.org/grpc v1.62.1
@@ -40,9 +40,7 @@ require (
 	github.com/fsnotify/fsnotify v1.7.0 // indirect
 	github.com/glebarez/go-sqlite v1.22.0 // indirect
 	github.com/go-jose/go-jose/v3 v3.0.3 // indirect
-	github.com/go-logfmt/logfmt v0.6.0 // indirect
 	github.com/go-ole/go-ole v1.3.0 // indirect
-	github.com/godror/knownpb v0.1.1 // indirect
 	github.com/golang/protobuf v1.5.4 // indirect
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/hashicorp/hcl v1.0.0 // indirect

@@ -205,25 +205,10 @@ github.com/glebarez/go-sqlite
 github.com/go-jose/go-jose/v3
 github.com/go-jose/go-jose/v3/cipher
 github.com/go-jose/go-jose/v3/json
-# github.com/go-logfmt/logfmt v0.6.0
-## explicit; go 1.17
-github.com/go-logfmt/logfmt
 # github.com/go-ole/go-ole v1.3.0
 ## explicit; go 1.12
 github.com/go-ole/go-ole
 github.com/go-ole/go-ole/oleutil
-# github.com/godror/godror v0.42.1
-## explicit; go 1.21
-github.com/godror/godror
-github.com/godror/godror/dsn
-github.com/godror/godror/odpi/embed
-github.com/godror/godror/odpi/include
-github.com/godror/godror/odpi/src
-github.com/godror/godror/slog
-# github.com/godror/knownpb v0.1.1
-## explicit; go 1.17
-github.com/godror/knownpb/internal
-github.com/godror/knownpb/timestamppb
 # github.com/golang/protobuf v1.5.4
 ## explicit; go 1.17
 github.com/golang/protobuf/jsonpb
@@ -321,6 +306,16 @@ github.com/shirou/gopsutil/v3/process
 # github.com/shoenig/go-m1cpu v0.1.6
 ## explicit; go 1.20
 github.com/shoenig/go-m1cpu
+# github.com/sijms/go-ora/v2 v2.8.11
+## explicit; go 1.17
+github.com/sijms/go-ora/v2
+github.com/sijms/go-ora/v2/advanced_nego
+github.com/sijms/go-ora/v2/advanced_nego/ntlmssp
+github.com/sijms/go-ora/v2/converters
+github.com/sijms/go-ora/v2/network
+github.com/sijms/go-ora/v2/network/security
+github.com/sijms/go-ora/v2/network/security/md4
+github.com/sijms/go-ora/v2/trace
 # github.com/sourcegraph/conc v0.3.0
 ## explicit; go 1.19
 github.com/sourcegraph/conc
