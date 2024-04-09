@@ -57,9 +57,9 @@ func (o *OracleEBS) Validate(ctx context.Context) (annotations.Annotations, erro
 }
 
 const (
-	DEFAULT_PORT    = 1521
-	DEFAULT_SERVER  = "apps.example.com"
-	DEFAULT_SERVICE = "EBSDB"
+	DefaultPort    = 1521
+	DefaultServer  = "apps.example.com"
+	DefaultService = "EBSDB"
 )
 
 // New returns a new instance of the connector.
@@ -68,19 +68,19 @@ func New(ctx context.Context, cfg ebs.Config) (*OracleEBS, error) {
 	var server, service string
 
 	if cfg.Port == 0 {
-		port = DEFAULT_PORT
+		port = DefaultPort
 	} else {
 		port = cfg.Port
 	}
 
 	if cfg.Server == "" {
-		server = DEFAULT_SERVER
+		server = DefaultServer
 	} else {
 		server = cfg.Server
 	}
 
 	if cfg.Service == "" {
-		service = DEFAULT_SERVICE
+		service = DefaultService
 	} else {
 		service = cfg.Service
 	}
