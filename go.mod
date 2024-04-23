@@ -3,7 +3,7 @@ module github.com/conductorone/baton-oracle-ebs
 go 1.22.1
 
 require (
-	github.com/conductorone/baton-sdk v0.1.31
+	github.com/conductorone/baton-sdk v0.1.33
 	github.com/grpc-ecosystem/go-grpc-middleware v1.4.0
 	github.com/sijms/go-ora/v2 v2.8.11
 	github.com/spf13/cobra v1.8.0
