@@ -13,7 +13,7 @@ type User struct {
 	CreatedAt     *time.Time `json:"creation_date" sql:"CREATION_DATE"`
 	StartDate     *time.Time `json:"start_date" sql:"START_DATE"`
 	EndDate       *time.Time `json:"end_date" sql:"END_DATE"`
-	Group         string     `json:"security_grou_id" sql:"SECURITY_GROUP_ID"`
+	Group         string     `json:"security_group_id" sql:"SECURITY_GROUP_ID"`
 }
 
 // Table name: PQH_ROLES.

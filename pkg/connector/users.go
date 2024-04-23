@@ -22,8 +22,11 @@ func (u *userBuilder) ResourceType(ctx context.Context) *v2.ResourceType {
 
 func userResource(user *ebs.User) (*v2.Resource, error) {
 	profile := map[string]interface{}{
-		"user_id":    user.ID,
-		"start_date": user.StartDate.Format(time.RFC3339),
+		"user_id":        user.ID,
+		"start_date":     user.StartDate.Format(time.RFC3339),
+		"description":    user.Description,
+		"employee_id":    user.EmployeeID,
+		"security_group": user.Group,
 	}
 
 	if user.EndDate != nil {
