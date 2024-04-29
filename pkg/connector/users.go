@@ -2,6 +2,7 @@ package connector
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/conductorone/baton-oracle-ebs/pkg/ebs"
@@ -68,30 +69,42 @@ func userResource(user *ebs.User) (*v2.Resource, error) {
 
 // List returns all the users from the database as resource objects.
 // Users include a UserTrait because they are the 'shape' of a standard user.
-func (u *userBuilder) List(ctx context.Context, parentResourceID *v2.ResourceId, pToken *pagination.Token) ([]*v2.Resource, string, annotations.Annotations, error) {
+func (u *userBuilder) List(ctx context.Context, _ *v2.ResourceId, pToken *pagination.Token) ([]*v2.Resource, string, annotations.Annotations, error) {
 	err := u.client.Conn.Open()
 	if err != nil {
-		return nil, "", nil, err
+		return nil, "", nil, fmt.Errorf("failed to open connection: %w", err)
 	}
 
 	defer u.client.Conn.Close()
 
-	users, err := u.client.ListUsers(ctx)
+	bag, offset, err := parsePageToken(pToken.Token, &v2.ResourceId{ResourceType: userResourceType.Id})
 	if err != nil {
-		return nil, "", nil, err
+		return nil, "", nil, fmt.Errorf("failed to parse page token: %w", err)
+	}
+
+	pgVars := ebs.NewPaginationVars(offset, ResourcesPageSize)
+	users, pageTotal, err := u.client.ListUsers(ctx, pgVars)
+	if err != nil {
+		return nil, "", nil, fmt.Errorf("failed to list users: %w", err)
 	}
 
 	var rv []*v2.Resource
 	for _, user := range users {
 		ur, err := userResource(&user) // #nosec G601
 		if err != nil {
-			return nil, "", nil, err
+			return nil, "", nil, fmt.Errorf("failed to create user resource: %w", err)
 		}
 
 		rv = append(rv, ur)
 	}
 
-	return rv, "", nil, nil
+	next := prepareNextToken(offset, pageTotal)
+	nextToken, err := bag.NextToken(next)
+	if err != nil {
+		return nil, "", nil, fmt.Errorf("failed to prepare next token: %w", err)
+	}
+
+	return rv, nextToken, nil, nil
 }
 
 // Entitlements always returns an empty slice for users.

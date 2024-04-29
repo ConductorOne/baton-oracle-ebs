@@ -2,6 +2,7 @@ package connector
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/conductorone/baton-oracle-ebs/pkg/ebs"
@@ -48,30 +49,42 @@ func roleResource(role *ebs.Role) (*v2.Resource, error) {
 	return res, nil
 }
 
-func (r *roleBuilder) List(ctx context.Context, _ *v2.ResourceId, _ *pagination.Token) ([]*v2.Resource, string, annotations.Annotations, error) {
+func (r *roleBuilder) List(ctx context.Context, _ *v2.ResourceId, pToken *pagination.Token) ([]*v2.Resource, string, annotations.Annotations, error) {
 	err := r.client.Conn.Open()
 	if err != nil {
-		return nil, "", nil, err
+		return nil, "", nil, fmt.Errorf("failed to open connection: %w", err)
 	}
 
 	defer r.client.Conn.Close()
 
-	roles, err := r.client.ListRoles(ctx)
+	bag, offset, err := parsePageToken(pToken.Token, &v2.ResourceId{ResourceType: roleResourceType.Id})
 	if err != nil {
-		return nil, "", nil, err
+		return nil, "", nil, fmt.Errorf("failed to parse page token: %w", err)
+	}
+
+	pgVars := ebs.NewPaginationVars(offset, ResourcesPageSize)
+	roles, pageTotal, err := r.client.ListRoles(ctx, pgVars)
+	if err != nil {
+		return nil, "", nil, fmt.Errorf("failed to list roles: %w", err)
 	}
 
 	var rv []*v2.Resource
 	for _, role := range roles {
 		ur, err := roleResource(&role) // #nosec G601
 		if err != nil {
-			return nil, "", nil, err
+			return nil, "", nil, fmt.Errorf("failed to create role resource: %w", err)
 		}
 
 		rv = append(rv, ur)
 	}
 
-	return rv, "", nil, nil
+	next := prepareNextToken(offset, pageTotal)
+	nextToken, err := bag.NextToken(next)
+	if err != nil {
+		return nil, "", nil, fmt.Errorf("failed to prepare next token: %w", err)
+	}
+
+	return rv, nextToken, nil, nil
 }
 
 func (r *roleBuilder) Entitlements(_ context.Context, resource *v2.Resource, _ *pagination.Token) ([]*v2.Entitlement, string, annotations.Annotations, error) {
