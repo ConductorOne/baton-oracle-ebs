@@ -30,5 +30,8 @@
         "CAPABILITY_SYNC"
       ]
     }
+  ],
+  "connectorCapabilities": [
+    "CAPABILITY_SYNC"
   ]
 }
