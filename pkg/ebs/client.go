@@ -96,7 +96,7 @@ func (c *Client) ListUsers(ctx context.Context, pgVars *PaginationVars) ([]User,
 	}
 
 	// stop paginating if the number of records is less than the page size
-	if len(users) < int(pgVars.Limit) {
+	if uint(len(users)) < pgVars.Limit {
 		return users, 0, nil
 	}
 
@@ -131,7 +131,7 @@ func (c *Client) ListRoles(ctx context.Context, pgVars *PaginationVars) ([]Role,
 	}
 
 	// stop paginating if the number of records is less than the page size
-	if len(roles) < int(pgVars.Limit) {
+	if uint(len(roles)) < pgVars.Limit {
 		return roles, 0, nil
 	}
 
