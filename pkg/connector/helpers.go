@@ -59,7 +59,7 @@ func prepareNextToken(offset uint, pageTotal uint) string {
 
 	next := offset + ResourcesPageSize
 	if pageTotal == ResourcesPageSize {
-		token = strconv.Itoa(int(next))
+		token = strconv.FormatUint(uint64(next), 10)
 	}
 
 	return token
