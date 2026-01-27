@@ -14,6 +14,7 @@ var (
 	PasswordField = field.StringField(
 		"password",
 		field.WithDescription("Password for the Oracle EBS Database connection"),
+		field.WithIsSecret(true),
 		field.WithRequired(true),
 	)
 
