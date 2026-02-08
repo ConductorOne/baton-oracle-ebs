@@ -50,6 +50,7 @@ func getConnector(ctx context.Context, c *cfg.OracleEbs) (types.ConnectorServer,
 		Server:   c.Server,
 		Service:  c.Service,
 		Port:     c.Port,
+		BaseURL:  c.BaseUrl,
 	}
 
 	cb, err := connector.New(ctx, ebsCfg)
