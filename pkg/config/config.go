@@ -36,6 +36,7 @@ var (
 	BaseURLField = field.StringField(
 		"base-url",
 		field.WithDescription("Override the Oracle EBS connection URL (for testing)"),
+		field.WithHidden(true),
 	)
 
 	ConfigurationFields = []field.SchemaField{
