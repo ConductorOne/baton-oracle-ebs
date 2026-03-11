@@ -5,46 +5,42 @@ import (
 )
 
 var (
+	InstanceURLField = field.StringField(
+		"instance-url",
+		field.WithDisplayName("Instance URL"),
+		field.WithDescription("The Oracle Fusion Cloud instance URL (e.g. https://servername.fa.us2.oraclecloud.com)."),
+		field.WithRequired(true),
+	)
 	UsernameField = field.StringField(
 		"username",
-		field.WithDescription("Username for the Oracle EBS Database connection"),
+		field.WithDisplayName("Username"),
+		field.WithDescription("The Oracle Fusion Cloud username for API access."),
 		field.WithRequired(true),
 	)
-
 	PasswordField = field.StringField(
 		"password",
-		field.WithDescription("Password for the Oracle EBS Database connection"),
-		field.WithIsSecret(true),
+		field.WithDisplayName("Password"),
+		field.WithDescription("The Oracle Fusion Cloud password for API access."),
 		field.WithRequired(true),
+		field.WithIsSecret(true),
 	)
 
-	ServerField = field.StringField(
-		"server",
-		field.WithDescription("Server for the Oracle EBS connection"),
-	)
-
-	ServiceField = field.StringField(
-		"service",
-		field.WithDescription("Service for the Oracle EBS connection"),
-	)
-
-	PortField = field.IntField(
-		"port",
-		field.WithDescription("Port for the Oracle EBS connection"),
-	)
-
+	// Add the SchemaFields for the Config.
 	ConfigurationFields = []field.SchemaField{
+		InstanceURLField,
 		UsernameField,
 		PasswordField,
-		ServerField,
-		ServiceField,
-		PortField,
 	}
 
-	ConfigurationSchema = field.Configuration{
-		Fields: ConfigurationFields,
-	}
+	// FieldRelationships defines relationships between the ConfigurationFields that can be automatically validated.
+	FieldRelationships = []field.SchemaFieldRelationship{}
 )
 
-//go:generate go run ./gen
-var Config = field.NewConfiguration(ConfigurationFields)
+//go:generate go run -tags=generate ./gen
+var Config = field.NewConfiguration(
+	ConfigurationFields,
+	field.WithConstraints(FieldRelationships...),
+	field.WithConnectorDisplayName("Oracle SCM"),
+	field.WithHelpUrl("/docs/baton/oracle-scm"),
+	field.WithIconUrl("/static/app-icons/oracle.svg"),
+)

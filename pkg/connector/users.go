@@ -3,9 +3,9 @@ package connector
 import (
 	"context"
 	"fmt"
-	"time"
+	"strconv"
 
-	"github.com/conductorone/baton-oracle-ebs/pkg/ebs"
+	"github.com/conductorone/baton-oracle-scm/pkg/client"
 	v2 "github.com/conductorone/baton-sdk/pb/c1/connector/v2"
 	"github.com/conductorone/baton-sdk/pkg/annotations"
 	"github.com/conductorone/baton-sdk/pkg/pagination"
@@ -13,113 +13,104 @@ import (
 )
 
 type userBuilder struct {
-	client       *ebs.Client
-	resourceType *v2.ResourceType
+	client *client.FusionClient
 }
 
-func (u *userBuilder) ResourceType(ctx context.Context) *v2.ResourceType {
+func (u *userBuilder) ResourceType(_ context.Context) *v2.ResourceType {
 	return userResourceType
 }
 
-func userResource(user *ebs.User) (*v2.Resource, error) {
+// userToResource converts an Oracle Fusion Cloud user account to a Baton resource.
+func (u *userBuilder) userToResource(user *client.UserAccount) (*v2.Resource, error) {
 	profile := map[string]interface{}{
-		"user_id":        user.ID,
-		"start_date":     user.StartDate.Format(time.RFC3339),
-		"description":    user.Description,
-		"employee_id":    user.EmployeeID,
-		"security_group": user.Group,
+		"user_id":  user.UserID,
+		"username": user.Username,
 	}
 
-	if user.EndDate != nil {
-		profile["end_date"] = user.EndDate.Format(time.RFC3339)
+	if user.PersonID != nil {
+		profile["person_id"] = *user.PersonID
+	}
+	if user.PersonNumber != nil {
+		profile["person_number"] = *user.PersonNumber
+	}
+	if user.GUID != nil {
+		profile["guid"] = *user.GUID
 	}
 
-	status := v2.UserTrait_Status_STATUS_ENABLED
-	if user.EndDate != nil {
-		status = v2.UserTrait_Status_STATUS_DISABLED
-	}
-
-	options := []rs.UserTraitOption{
+	userTraitOptions := []rs.UserTraitOption{
 		rs.WithUserProfile(profile),
-		rs.WithStatus(status),
-		rs.WithEmail(user.EmailAddress, true),
-		rs.WithUserLogin(user.UserName),
+		rs.WithUserLogin(user.Username),
 	}
 
-	if user.LastLogonDate != nil {
-		options = append(options, rs.WithLastLogin(*user.LastLogonDate))
+	// Set email if available.
+	if user.EmailAddress != nil && *user.EmailAddress != "" {
+		userTraitOptions = append(userTraitOptions, rs.WithEmail(*user.EmailAddress, true))
 	}
 
-	if user.CreatedAt != nil {
-		options = append(options, rs.WithCreatedAt(*user.CreatedAt))
+	// Determine user status based on Suspended field.
+	userStatus := v2.UserTrait_Status_STATUS_ENABLED
+	if user.Suspended != nil && *user.Suspended {
+		userStatus = v2.UserTrait_Status_STATUS_DISABLED
+	}
+	userTraitOptions = append(userTraitOptions, rs.WithStatus(userStatus))
+
+	// Use display name if available, fall back to username.
+	displayName := user.Username
+	if user.DisplayName != nil && *user.DisplayName != "" {
+		displayName = *user.DisplayName
 	}
 
-	res, err := rs.NewUserResource(
-		user.UserName,
-		userResourceType,
-		user.ID,
-		options,
-	)
+	// Use UserID as the stable resource identifier.
+	resourceID := strconv.FormatInt(user.UserID, 10)
+	ret, err := rs.NewUserResource(displayName, userResourceType, resourceID, userTraitOptions)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("baton-oracle-scm: failed to create user resource: %w", err)
 	}
 
-	return res, nil
+	return ret, nil
 }
 
-// List returns all the users from the database as resource objects.
-// Users include a UserTrait because they are the 'shape' of a standard user.
+// List returns all user accounts from Oracle Fusion Cloud as resource objects.
 func (u *userBuilder) List(ctx context.Context, _ *v2.ResourceId, pToken *pagination.Token) ([]*v2.Resource, string, annotations.Annotations, error) {
-	err := u.client.Conn.Open()
+	offset, err := parsePageToken(pToken.Token)
 	if err != nil {
-		return nil, "", nil, fmt.Errorf("failed to open connection: %w", err)
+		return nil, "", nil, err
 	}
 
-	defer u.client.Conn.Close()
-
-	bag, offset, err := parsePageToken(pToken.Token, &v2.ResourceId{ResourceType: userResourceType.Id})
+	outputAnnotations := annotations.New()
+	users, hasMore, rateLimit, err := u.client.ListUserAccounts(ctx, offset)
+	outputAnnotations.WithRateLimiting(rateLimit)
 	if err != nil {
-		return nil, "", nil, fmt.Errorf("failed to parse page token: %w", err)
+		return nil, "", outputAnnotations, fmt.Errorf("baton-oracle-scm: failed to list users: %w", err)
 	}
 
-	pgVars := ebs.NewPaginationVars(offset, ResourcesPageSize)
-	users, pageTotal, err := u.client.ListUsers(ctx, pgVars)
-	if err != nil {
-		return nil, "", nil, fmt.Errorf("failed to list users: %w", err)
-	}
-
-	var rv []*v2.Resource
+	resources := make([]*v2.Resource, 0, len(users))
 	for _, user := range users {
-		ur, err := userResource(&user) // #nosec G601
+		userResource, err := u.userToResource(user)
 		if err != nil {
-			return nil, "", nil, fmt.Errorf("failed to create user resource: %w", err)
+			return nil, "", outputAnnotations, err
 		}
-
-		rv = append(rv, ur)
+		resources = append(resources, userResource)
 	}
 
-	next := prepareNextToken(offset, pageTotal)
-	nextToken, err := bag.NextToken(next)
-	if err != nil {
-		return nil, "", nil, fmt.Errorf("failed to prepare next token: %w", err)
-	}
+	nextOffset := client.GetNextOffset(hasMore, offset, client.DefaultPageSize)
+	nextToken := formatNextPageToken(nextOffset)
 
-	return rv, nextToken, nil, nil
+	return resources, nextToken, outputAnnotations, nil
 }
 
 // Entitlements always returns an empty slice for users.
-func (u *userBuilder) Entitlements(_ context.Context, resource *v2.Resource, _ *pagination.Token) ([]*v2.Entitlement, string, annotations.Annotations, error) {
+func (u *userBuilder) Entitlements(_ context.Context, _ *v2.Resource, _ *pagination.Token) ([]*v2.Entitlement, string, annotations.Annotations, error) {
 	return nil, "", nil, nil
 }
 
-// Grants always returns an empty slice for users since they don't have any entitlements.
-func (u *userBuilder) Grants(ctx context.Context, resource *v2.Resource, pToken *pagination.Token) ([]*v2.Grant, string, annotations.Annotations, error) {
+// Grants always returns an empty slice for users since they don't have entitlements.
+func (u *userBuilder) Grants(_ context.Context, _ *v2.Resource, _ *pagination.Token) ([]*v2.Grant, string, annotations.Annotations, error) {
 	return nil, "", nil, nil
 }
 
-func newUserBuilder(client *ebs.Client) *userBuilder {
+func newUserBuilder(fusionClient *client.FusionClient) *userBuilder {
 	return &userBuilder{
-		client:       client,
-		resourceType: userResourceType,
+		client: fusionClient,
 	}
 }
