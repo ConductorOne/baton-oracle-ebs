@@ -67,7 +67,10 @@ const (
 func New(ctx context.Context, cfg ebs.Config) (*OracleEBS, error) {
 	var connString string
 
-	// Use base-url if provided (for testing), otherwise build from components
+	// Use base-url if provided (for testing), otherwise build from components.
+	// When base-url is set, credentials must be embedded in the connection
+	// string or handled by the test harness — this intentionally bypasses
+	// the username/password config fields.
 	if cfg.BaseURL != "" {
 		connString = cfg.BaseURL
 	} else {
