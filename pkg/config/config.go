@@ -33,12 +33,20 @@ var (
 		field.WithDescription("Port for the Oracle EBS connection"),
 	)
 
+	BaseURLField = field.StringField(
+		"base-url",
+		field.WithDescription("Override the Oracle EBS connection URL (for testing)"),
+		field.WithHidden(true),
+		field.WithExportTarget(field.ExportTargetCLIOnly),
+	)
+
 	ConfigurationFields = []field.SchemaField{
 		UsernameField,
 		PasswordField,
 		ServerField,
 		ServiceField,
 		PortField,
+		BaseURLField,
 	}
 
 	ConfigurationSchema = field.Configuration{

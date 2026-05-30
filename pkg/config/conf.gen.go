@@ -9,6 +9,7 @@ type OracleEbs struct {
 	Server string `mapstructure:"server"`
 	Service string `mapstructure:"service"`
 	Port int `mapstructure:"port"`
+	BaseUrl string `mapstructure:"base-url"`
 }
 
 func (c *OracleEbs) findFieldByTag(tagValue string) (any, bool) {

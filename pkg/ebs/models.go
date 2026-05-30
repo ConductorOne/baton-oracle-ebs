@@ -49,4 +49,6 @@ type Config struct {
 
 	Username string `mapstructure:"username"`
 	Password string `mapstructure:"password"`
+
+	BaseURL string `mapstructure:"base-url"`
 }

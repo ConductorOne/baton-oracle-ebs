@@ -65,35 +65,45 @@ const (
 
 // New returns a new instance of the connector.
 func New(ctx context.Context, cfg ebs.Config) (*OracleEBS, error) {
-	var port int
-	var server, service string
+	var connString string
 
-	if cfg.Port == 0 {
-		port = DefaultPort
+	// Use base-url if provided (for testing), otherwise build from components.
+	// When base-url is set, credentials must be embedded in the connection
+	// string or handled by the test harness — this intentionally bypasses
+	// the username/password config fields.
+	if cfg.BaseURL != "" {
+		connString = cfg.BaseURL
 	} else {
-		port = cfg.Port
-	}
+		var port int
+		var server, service string
 
-	if cfg.Server == "" {
-		server = DefaultServer
-	} else {
-		server = cfg.Server
-	}
+		if cfg.Port == 0 {
+			port = DefaultPort
+		} else {
+			port = cfg.Port
+		}
 
-	if cfg.Service == "" {
-		service = DefaultService
-	} else {
-		service = cfg.Service
-	}
+		if cfg.Server == "" {
+			server = DefaultServer
+		} else {
+			server = cfg.Server
+		}
 
-	connString := ora.BuildUrl(
-		server,
-		port,
-		service,
-		cfg.Username,
-		cfg.Password,
-		nil, // TODO: add trace file for debugging?
-	)
+		if cfg.Service == "" {
+			service = DefaultService
+		} else {
+			service = cfg.Service
+		}
+
+		connString = ora.BuildUrl(
+			server,
+			port,
+			service,
+			cfg.Username,
+			cfg.Password,
+			nil, // TODO: add trace file for debugging?
+		)
+	}
 
 	conn, err := ora.NewConnection(connString)
 	if err != nil {
