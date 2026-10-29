@@ -40,18 +40,17 @@ func userResource(user *ebs.User) (*v2.Resource, error) {
 	}
 
 	options := []rs.UserTraitOption{
-		rs.WithUserProfile(profile),
-		rs.WithStatus(status),
 		rs.WithEmail(user.EmailAddress, true),
 		rs.WithUserLogin(user.UserName),
 	}
+	var resourceOpts []rs.ResourceOption
 
 	if user.LastLogonDate != nil {
 		options = append(options, rs.WithLastLogin(*user.LastLogonDate))
 	}
 
 	if user.CreatedAt != nil {
-		options = append(options, rs.WithCreatedAt(*user.CreatedAt))
+		resourceOpts = append(resourceOpts, rs.WithResourceCreatedAt(*user.CreatedAt))
 	}
 
 	res, err := rs.NewUserResource(
@@ -59,6 +58,7 @@ func userResource(user *ebs.User) (*v2.Resource, error) {
 		userResourceType,
 		user.ID,
 		options,
+		append(resourceOpts, rs.WithResourceProfile(profile), rs.WithResourceStatus(v2.Status_ResourceStatus(status), ""))...,
 	)
 	if err != nil {
 		return nil, err

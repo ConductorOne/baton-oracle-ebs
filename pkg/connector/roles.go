@@ -32,15 +32,14 @@ func roleResource(role *ebs.Role) (*v2.Resource, error) {
 		profile["created_at"] = role.CreatedAt.Format(time.RFC3339)
 	}
 
-	options := []rs.RoleTraitOption{
-		rs.WithRoleProfile(profile),
-	}
+	options := []rs.RoleTraitOption{}
 
 	res, err := rs.NewRoleResource(
 		role.Name,
 		roleResourceType,
 		role.ID,
 		options,
+		rs.WithResourceProfile(profile),
 	)
 	if err != nil {
 		return nil, err
